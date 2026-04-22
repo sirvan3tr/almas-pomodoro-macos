@@ -2,10 +2,12 @@ import AppKit
 
 /// Renders `TimerState` onto an `NSStatusItem`'s button.
 ///
-/// This is a pure sink: it holds no app state beyond what is needed to
-/// animate the finish flash. It is driven by `render(state:)`.
+/// Pure sink — holds no app state beyond what is needed to animate the
+/// finish flash. Driven by `render(state:)`; every call tears down any
+/// previous animation before applying a new frame.
 @MainActor
 final class StatusItemRenderer {
+
     private let statusItem: NSStatusItem
     private var flashTimer: Foundation.Timer?
     private var flashOn = true
@@ -20,8 +22,9 @@ final class StatusItemRenderer {
         button.wantsLayer = true
         button.layer?.cornerRadius = StatusItemStyle.cornerRadius
         button.layer?.masksToBounds = true
-        button.imagePosition = .noImage
-        button.font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
+        button.font = StatusItemStyle.pillFont
+        // Slightly larger touch/click target than the default text-only size.
+        button.imagePosition = .imageOnly
     }
 
     func render(_ state: TimerState) {
@@ -32,45 +35,45 @@ final class StatusItemRenderer {
         case .running(_, let remaining):
             renderRunning(remaining: remaining)
         case .finished(let session):
-            renderFinished(preset: session.preset)
+            renderFinished(session: session)
         }
     }
 
-    // MARK: - Renders
+    // MARK: - Idle
 
     private func renderIdle() {
         guard let button = statusItem.button else { return }
         button.layer?.backgroundColor = NSColor.clear.cgColor
-        let img = NSImage(
-            systemSymbolName: "timer",
-            accessibilityDescription: "Almas Pomodoro — idle"
-        )
-        img?.isTemplate = true
-        button.image = img
-        button.imagePosition = .imageOnly
         button.attributedTitle = NSAttributedString(string: "")
+        button.imagePosition = .imageOnly
+        button.image = Icons.idleStatusBar()
+        button.contentTintColor = nil
     }
+
+    // MARK: - Running
 
     private func renderRunning(remaining: Int) {
         guard let button = statusItem.button else { return }
         button.image = nil
         button.imagePosition = .noImage
         button.layer?.backgroundColor = StatusItemStyle.runningBackground.cgColor
-        button.attributedTitle = Self.title(
+        button.attributedTitle = Self.pillTitle(
             text: " \(Formatting.clock(remaining)) ",
             color: StatusItemStyle.runningForeground
         )
     }
 
-    private func renderFinished(preset: Preset) {
+    // MARK: - Finished
+
+    private func renderFinished(session: Session) {
         guard let button = statusItem.button else { return }
         button.image = nil
         button.imagePosition = .noImage
         flashOn = true
-        applyFlashFrame(label: preset.name, button: button)
-        // Timer fires on the main run loop, so we're always on the main actor
-        // at callback time. `assumeIsolated` encodes that invariant rather
-        // than silently hopping threads.
+        applyFlashFrame(session: session, button: button, animated: false)
+
+        // A repeating timer + CABasicAnimation gives us a smooth crossfade
+        // between the two flash colours rather than a jarring hard toggle.
         let t = Foundation.Timer(
             timeInterval: StatusItemStyle.flashInterval,
             repeats: true
@@ -78,35 +81,47 @@ final class StatusItemRenderer {
             MainActor.assumeIsolated {
                 guard let self, let button else { return }
                 self.flashOn.toggle()
-                self.applyFlashFrame(label: preset.name, button: button)
+                self.applyFlashFrame(session: session, button: button, animated: true)
             }
         }
         RunLoop.main.add(t, forMode: .common)
         flashTimer = t
     }
 
-    private func applyFlashFrame(label: String, button: NSStatusBarButton) {
+    private func applyFlashFrame(session: Session, button: NSStatusBarButton, animated: Bool) {
         let bg = flashOn
             ? StatusItemStyle.flashOnBackground
             : StatusItemStyle.flashOffBackground
+        if animated, let layer = button.layer {
+            let anim = CABasicAnimation(keyPath: "backgroundColor")
+            anim.fromValue = layer.presentation()?.backgroundColor ?? layer.backgroundColor
+            anim.toValue = bg.cgColor
+            anim.duration = StatusItemStyle.flashCrossfade
+            anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            layer.add(anim, forKey: "flashBackground")
+        }
         button.layer?.backgroundColor = bg.cgColor
-        button.attributedTitle = Self.title(
-            text: " \(label) done ",
+
+        button.attributedTitle = Self.pillTitle(
+            text: " \(session.preset.name) done ",
             color: StatusItemStyle.flashForeground
         )
     }
 
+    // MARK: - Lifecycle
+
     private func stopFlash() {
         flashTimer?.invalidate()
         flashTimer = nil
+        statusItem.button?.layer?.removeAnimation(forKey: "flashBackground")
     }
 
-    private static func title(text: String, color: NSColor) -> NSAttributedString {
+    private static func pillTitle(text: String, color: NSColor) -> NSAttributedString {
         NSAttributedString(
             string: text,
             attributes: [
                 .foregroundColor: color,
-                .font: NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
+                .font: StatusItemStyle.pillFont
             ]
         )
     }

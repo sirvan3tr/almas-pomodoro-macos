@@ -69,10 +69,13 @@ enum IntentDialog {
         prefill: String
     ) -> RawOutcome {
         let alert = NSAlert()
-        alert.messageText = "Start \(preset.name) — \(Formatting.shortDuration(preset.seconds))"
+        alert.messageText = "\(preset.name) · \(Formatting.shortDuration(preset.seconds))"
         alert.informativeText = errorText
-            ?? "What will you do this session? (e.g. “Write 10 emails.”) You can skip."
+            ?? "Set an intent for this session, or skip."
         alert.alertStyle = errorText == nil ? .informational : .warning
+        if let icon = Icons.dialogIntent() {
+            alert.icon = icon
+        }
 
         // Order matters: first button is the default (Enter),
         // and NSAlert auto-maps a button titled "Cancel" to Esc.
@@ -80,9 +83,11 @@ enum IntentDialog {
         alert.addButton(withTitle: "Skip")
         alert.addButton(withTitle: "Cancel")
 
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        field.placeholderString = "Session intent (optional)"
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.placeholderString = "e.g. Write 10 emails"
         field.stringValue = prefill
+        field.bezelStyle = .roundedBezel
+        field.font = NSFont.systemFont(ofSize: 13)
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
 

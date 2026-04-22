@@ -55,18 +55,23 @@ enum AddPresetDialog {
         alert.messageText = "Add custom timer"
         alert.informativeText = errorText ?? "Give it a short name and a duration in whole minutes."
         alert.alertStyle = errorText == nil ? .informational : .warning
+        if let icon = Icons.dialogAddPreset() {
+            alert.icon = icon
+        }
         alert.addButton(withTitle: "Add")
         alert.addButton(withTitle: "Cancel")
 
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 260, height: 64))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 64))
 
-        let nameField = NSTextField(frame: NSRect(x: 0, y: 32, width: 260, height: 24))
+        let nameField = NSTextField(frame: NSRect(x: 0, y: 32, width: 300, height: 24))
         nameField.placeholderString = "Name (e.g. Deep Work)"
         nameField.stringValue = prefillName
+        nameField.bezelStyle = .roundedBezel
 
-        let minutesField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        let minutesField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         minutesField.placeholderString = "Minutes (e.g. 50)"
         minutesField.stringValue = prefillMinutes
+        minutesField.bezelStyle = .roundedBezel
 
         container.addSubview(nameField)
         container.addSubview(minutesField)
