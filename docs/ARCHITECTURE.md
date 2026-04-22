@@ -11,13 +11,15 @@ Sources/AlmasPomodoro/
 ├── App/
 │   └── AppDelegate.swift      # App lifecycle + AppActions dispatch
 ├── Timer/
+│   ├── Session.swift          # preset + optional intent + startedAt
 │   ├── TimerState.swift       # pure value type: idle | running | finished
 │   └── PomodoroTimer.swift    # countdown engine, push-based onChange
 ├── MenuBar/
 │   ├── StatusItemStyle.swift  # colour + layout tokens (data, not behaviour)
 │   ├── StatusItemRenderer.swift # renders TimerState → NSStatusItem button
 │   ├── MenuBuilder.swift      # pure constructor: state + presets → NSMenu
-│   └── AddPresetDialog.swift  # modal for collecting custom-preset input
+│   ├── AddPresetDialog.swift  # modal for collecting custom-preset input
+│   └── IntentDialog.swift     # prompt at session start (Start/Skip/Cancel)
 ├── Presets/
 │   ├── Preset.swift           # value type with enforced invariants
 │   ├── PresetStore.swift      # JSON persistence (atomic, quarantines corrupt)
@@ -31,12 +33,21 @@ Sources/AlmasPomodoro/
 The one and only state variable the UI observes is `TimerState`:
 
 ```swift
+struct Session {
+    let preset: Preset
+    let intent: String?   // nil = skipped; non-nil = trimmed, non-empty
+    let startedAt: Date
+}
+
 enum TimerState {
     case idle
-    case running(preset: Preset, remaining: Int)
-    case finished(preset: Preset)
+    case running(session: Session, remaining: Int)
+    case finished(session: Session)
 }
 ```
+
+`Session` exists so forward-compatible additions (tags, history, focus-mode
+flags) live on the struct instead of mutating enum case arities.
 
 The menu bar's appearance is a **pure function** of that state:
 
@@ -52,13 +63,18 @@ No sound is played in any state. The finish cue is purely visual, by design.
 
 1. User opens the menu → `AppDelegate.menuNeedsUpdate` asks `MenuBuilder`
    for a fresh menu computed from `(state, presets)`.
-2. User picks a preset → `AppDelegate.startPresetFromMenu` calls
+2. User picks a preset → `AppDelegate.startPresetFromMenu` presents
+   `IntentDialog` (Start / Skip / Cancel). The dialog returns a
+   strongly-typed `Outcome`, constructed only after the intent has been
+   round-tripped through `Session.normalize`.
+3. On confirm/skip, a `Session` is built and passed to
    `PomodoroTimer.start`.
-3. `PomodoroTimer` emits every state change via `onChange`, which
+4. `PomodoroTimer` emits every state change via `onChange`, which
    `StatusItemRenderer.render` consumes.
-4. On hitting zero the timer transitions to `.finished`; the renderer
-   swaps its flash animation in.
-5. Clicking **Dismiss** (or pressing ↩ while the menu is open) calls
+5. On hitting zero the timer transitions to `.finished`; the renderer
+   swaps its flash animation in. The intent remains visible in the
+   menu's header so the user sees what they'd committed to.
+6. Clicking **Dismiss** (or pressing ↩ while the menu is open) calls
    `acknowledge()`, returning to `.idle`.
 
 ## Why this shape (per AGENTS.md)

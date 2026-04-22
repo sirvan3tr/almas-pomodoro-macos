@@ -68,7 +68,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, AppAct
             NSLog("[AlmasPomodoro] start: could not resolve preset from menu item.")
             return
         }
-        timer.start(preset)
+
+        let outcome = IntentDialog.present(for: preset)
+        let intent: String?
+        switch outcome {
+        case .cancelled:
+            return
+        case .skipped:
+            intent = nil
+        case .confirmed(let text):
+            intent = text
+        }
+
+        do {
+            let session = try Session(preset: preset, intent: intent)
+            timer.start(session)
+        } catch {
+            // Session validation already ran inside the dialog, so a failure
+            // here means a programming invariant was broken — surface it
+            // rather than silently swallowing.
+            fatalErrorUI(title: "Could not start session", detail: String(describing: error))
+        }
     }
 
     func removePresetFromMenu(_ sender: NSMenuItem) {

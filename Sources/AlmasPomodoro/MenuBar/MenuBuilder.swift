@@ -15,7 +15,9 @@ enum MenuBuilder {
     ) -> NSMenu {
         let menu = NSMenu()
 
-        menu.addItem(headerItem(for: state))
+        for item in headerItems(for: state) {
+            menu.addItem(item)
+        }
         menu.addItem(.separator())
 
         menu.addItem(sectionLabel("Start"))
@@ -93,16 +95,33 @@ enum MenuBuilder {
         return menu
     }
 
-    private static func headerItem(for state: TimerState) -> NSMenuItem {
-        let text: String
+    /// Header lines. May be one or two items depending on whether the
+    /// active session has a user-provided intent.
+    private static func headerItems(for state: TimerState) -> [NSMenuItem] {
         switch state {
         case .idle:
-            text = "Almas Pomodoro — idle"
-        case .running(let preset, let remaining):
-            text = "\(preset.name) — \(Formatting.clock(remaining)) remaining"
-        case .finished(let preset):
-            text = "\(preset.name) — finished"
+            return [disabledItem("Almas Pomodoro — idle")]
+        case .running(let session, let remaining):
+            let top = "\(session.preset.name) — \(Formatting.clock(remaining)) remaining"
+            return [disabledItem(top)] + intentRows(for: session)
+        case .finished(let session):
+            let top = "\(session.preset.name) — finished"
+            return [disabledItem(top)] + intentRows(for: session)
         }
+    }
+
+    private static func intentRows(for session: Session) -> [NSMenuItem] {
+        guard let intent = session.intent else { return [] }
+        // NSMenuItem titles aren't multi-line; truncate defensively so a
+        // pathological intent can't stretch the menu across the screen.
+        let maxGlyphs = 80
+        let display = intent.count > maxGlyphs
+            ? String(intent.prefix(maxGlyphs)) + "…"
+            : intent
+        return [disabledItem("↳ \(display)")]
+    }
+
+    private static func disabledItem(_ text: String) -> NSMenuItem {
         let item = NSMenuItem(title: text, action: nil, keyEquivalent: "")
         item.isEnabled = false
         return item

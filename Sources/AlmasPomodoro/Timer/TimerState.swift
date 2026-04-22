@@ -6,8 +6,8 @@ import Foundation
 /// these cases. No invalid combinations representable.
 enum TimerState: Equatable {
     case idle
-    case running(preset: Preset, remaining: Int)
-    case finished(preset: Preset)
+    case running(session: Session, remaining: Int)
+    case finished(session: Session)
 
     var isRunning: Bool {
         if case .running = self { return true }
@@ -19,11 +19,13 @@ enum TimerState: Equatable {
         return false
     }
 
-    var activePreset: Preset? {
+    var activeSession: Session? {
         switch self {
         case .idle: return nil
-        case .running(let p, _): return p
-        case .finished(let p): return p
+        case .running(let s, _): return s
+        case .finished(let s): return s
         }
     }
+
+    var activePreset: Preset? { activeSession?.preset }
 }

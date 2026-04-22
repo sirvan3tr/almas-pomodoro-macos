@@ -6,7 +6,13 @@ Click the menu-bar item (idle icon or coloured pill) to open the menu.
 
 From the menu you can:
 
-- **Start** any preset. The pill turns purple and starts counting down.
+- **Start** any preset. You'll be asked for a one-line **intent** for the
+  session (e.g. "Write 10 emails"). Three choices:
+  - **Start** — begins the timer with that intent.
+  - **Skip** — begins the timer with no intent recorded.
+  - **Cancel** (or Esc) — aborts, nothing starts.
+  The intent is shown in the menu header while the session runs and when
+  it finishes, so a glance at the menu reminds you what you set out to do.
 - **Add custom timer…** (⌘N) — opens a dialog asking for a name and a
   whole number of minutes. Validation runs at submit; any error is shown
   in-place so you can correct it without losing input.

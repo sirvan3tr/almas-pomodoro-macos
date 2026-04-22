@@ -31,8 +31,8 @@ final class StatusItemRenderer {
             renderIdle()
         case .running(_, let remaining):
             renderRunning(remaining: remaining)
-        case .finished(let preset):
-            renderFinished(preset: preset)
+        case .finished(let session):
+            renderFinished(preset: session.preset)
         }
     }
 

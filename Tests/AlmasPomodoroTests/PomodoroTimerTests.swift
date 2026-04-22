@@ -12,11 +12,23 @@ final class PomodoroTimerTests: XCTestCase {
         let t = PomodoroTimer()
         let preset = try Preset(name: "x", seconds: 60)
         t.start(preset)
-        guard case .running(let p, let r) = t.state else {
+        guard case .running(let session, let r) = t.state else {
             return XCTFail("expected running, got \(t.state)")
         }
-        XCTAssertEqual(p, preset)
+        XCTAssertEqual(session.preset, preset)
+        XCTAssertNil(session.intent)
         XCTAssertEqual(r, 60)
+    }
+
+    func testStartWithSessionCarriesIntent() throws {
+        let t = PomodoroTimer()
+        let preset = try Preset(name: "Focus", seconds: 10)
+        let session = try Session(preset: preset, intent: "Write 10 emails")
+        t.start(session)
+        guard case .running(let running, _) = t.state else {
+            return XCTFail("expected running, got \(t.state)")
+        }
+        XCTAssertEqual(running.intent, "Write 10 emails")
     }
 
     func testTickDecrementsRemaining() throws {

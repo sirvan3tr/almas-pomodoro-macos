@@ -12,6 +12,7 @@ APP_NAME    := AlmasPomodoro
 BUNDLE_ID   := sh.almas.pomodoro
 BUILD_DIR   := .build
 APP_DIR     := $(BUILD_DIR)/$(APP_NAME).app
+INSTALL_DIR := $(HOME)/Applications
 
 DEBUG_BIN   := $(BUILD_DIR)/debug/$(BIN_NAME)
 RELEASE_BIN := $(BUILD_DIR)/release/$(BIN_NAME)
@@ -86,10 +87,17 @@ app: release ## Package a minimal .app bundle under .build/ (for Finder launch).
 
 .PHONY: install
 install: app ## Copy the .app bundle into ~/Applications.
-	@mkdir -p "$$HOME/Applications"
-	@rm -rf "$$HOME/Applications/$(APP_NAME).app"
-	@cp -R "$(APP_DIR)" "$$HOME/Applications/"
-	@echo "→ installed: $$HOME/Applications/$(APP_NAME).app"
+	@mkdir -p "$(INSTALL_DIR)"
+	@rm -rf "$(INSTALL_DIR)/$(APP_NAME).app"
+	@cp -R "$(APP_DIR)" "$(INSTALL_DIR)/"
+	@echo "→ installed: $(INSTALL_DIR)/$(APP_NAME).app"
+
+.PHONY: restart
+restart: install ## Reinstall and relaunch the app from ~/Applications.
+	@pkill -x $(BIN_NAME) 2>/dev/null || true
+	@sleep 1
+	@open "$(INSTALL_DIR)/$(APP_NAME).app"
+	@echo "→ relaunched: $(INSTALL_DIR)/$(APP_NAME).app"
 
 .PHONY: log
 log: ## Tail the launched-app log.
