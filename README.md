@@ -17,14 +17,25 @@ make dev      # debug build, kill old instance, launch fresh
 make test     # run XCTest suite
 make app      # package a minimal .app bundle under .build/
 make install  # copy .app into ~/Applications
+make link     # symlink ~/.local/bin/almaspom (the CLI)
 make help     # see all targets
+```
+
+Once linked:
+
+```bash
+almaspom 25m -i "Write 10 emails"
+almaspom preset Pomodoro
+almaspom status
+almaspom stop
 ```
 
 ## Docs
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — module boundaries and state model.
 - [docs/BUILD.md](docs/BUILD.md) — build/run/packaging details.
-- [docs/USAGE.md](docs/USAGE.md) — keyboard shortcuts, data location, behaviour.
+- [docs/USAGE.md](docs/USAGE.md) — menu-bar UX, keyboard shortcuts, data.
+- [docs/CLI.md](docs/CLI.md) — `almaspom` command grammar and IPC format.
 - [AGENTS.md](AGENTS.md) — design principles this project is held to.
 
 ## Requirements

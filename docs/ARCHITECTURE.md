@@ -7,26 +7,41 @@ is decomposed so each piece is testable in isolation before composition.
 
 ```
 Sources/AlmasPomodoro/
-├── main.swift                 # NSApplication bootstrap (accessory policy)
 ├── App/
-│   └── AppDelegate.swift      # App lifecycle + AppActions dispatch
+│   ├── AlmasPomodoroApp.swift  # @main — branches to CLI or GUI on argv
+│   ├── AppDelegate.swift       # GUI lifecycle + menu dispatch
+│   └── CommandServer.swift     # CFMessagePort listener + router
+├── CLI/
+│   ├── IPC.swift               # Command / Response / StatusSnapshot wire types
+│   ├── DurationParser.swift    # "25m" / "1h30m" / "90s" → seconds
+│   ├── ArgumentParser.swift    # argv → Invocation (gui / command / help / version)
+│   ├── CLIClient.swift         # CFMessagePort round-trip, auto-launches GUI
+│   └── CLIRunner.swift         # prints, returns exit codes
 ├── Timer/
-│   ├── Session.swift          # preset + optional intent + startedAt
-│   ├── TimerState.swift       # pure value type: idle | running | finished
-│   └── PomodoroTimer.swift    # countdown engine, push-based onChange
+│   ├── Session.swift           # preset + optional intent + startedAt
+│   ├── TimerState.swift        # pure value type: idle | running | finished
+│   └── PomodoroTimer.swift     # countdown engine, push-based onChange
 ├── MenuBar/
-│   ├── StatusItemStyle.swift  # colour + layout tokens (data, not behaviour)
+│   ├── Icons.swift             # SF-Symbol palette, semantic API
+│   ├── StatusItemStyle.swift   # colour + layout tokens
 │   ├── StatusItemRenderer.swift # renders TimerState → NSStatusItem button
-│   ├── MenuBuilder.swift      # pure constructor: state + presets → NSMenu
-│   ├── AddPresetDialog.swift  # modal for collecting custom-preset input
-│   └── IntentDialog.swift     # prompt at session start (Start/Skip/Cancel)
+│   ├── MenuBuilder.swift       # pure: state + presets + target → NSMenu
+│   ├── AddPresetDialog.swift   # modal for custom-preset input
+│   └── IntentDialog.swift      # prompt at session start (Start/Skip/Cancel)
 ├── Presets/
-│   ├── Preset.swift           # value type with enforced invariants
-│   ├── PresetStore.swift      # JSON persistence (atomic, quarantines corrupt)
-│   └── AnyCodable.swift       # forward-compatible round-tripping
+│   ├── Preset.swift            # value type with enforced invariants
+│   ├── PresetStore.swift       # JSON persistence, atomic, quarantines corrupt
+│   └── AnyCodable.swift        # forward-compatible round-tripping
 └── Support/
-    └── Formatting.swift       # MM:SS and short-duration helpers
+    └── Formatting.swift        # MM:SS and short-duration helpers
 ```
+
+The GUI and the CLI are two clients of a single command bus. The
+command bus (`CommandServer` + `IPC` types) is the only interface that
+mutates app state. This keeps the model true to "prioritise the machine
+interface": when you type `almaspom 25m`, the same code path runs as
+when you click _Start → Pomodoro_ in the menu, going through the same
+validation, the same `Session` constructor, the same `PomodoroTimer.start`.
 
 ## State model
 

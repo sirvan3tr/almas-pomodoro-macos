@@ -13,6 +13,8 @@ BUNDLE_ID   := sh.almas.pomodoro
 BUILD_DIR   := .build
 APP_DIR     := $(BUILD_DIR)/$(APP_NAME).app
 INSTALL_DIR := $(HOME)/Applications
+LINK_DIR    := $(HOME)/.local/bin
+LINK_NAME   := almaspom
 
 DEBUG_BIN   := $(BUILD_DIR)/debug/$(BIN_NAME)
 RELEASE_BIN := $(BUILD_DIR)/release/$(BIN_NAME)
@@ -98,6 +100,20 @@ restart: install ## Reinstall and relaunch the app from ~/Applications.
 	@sleep 1
 	@open "$(INSTALL_DIR)/$(APP_NAME).app"
 	@echo "→ relaunched: $(INSTALL_DIR)/$(APP_NAME).app"
+
+.PHONY: link
+link: install ## Symlink the CLI at ~/.local/bin/almaspom.
+	@mkdir -p "$(LINK_DIR)"
+	@ln -sf "$(INSTALL_DIR)/$(APP_NAME).app/Contents/MacOS/$(BIN_NAME)" "$(LINK_DIR)/$(LINK_NAME)"
+	@echo "→ linked: $(LINK_DIR)/$(LINK_NAME)"
+	@case ":$$PATH:" in *":$(LINK_DIR):"*) ;; \
+		*) echo "   (add $(LINK_DIR) to your PATH to use '$(LINK_NAME)' from anywhere)";; \
+	esac
+
+.PHONY: unlink
+unlink: ## Remove the CLI symlink.
+	@rm -f "$(LINK_DIR)/$(LINK_NAME)"
+	@echo "→ removed: $(LINK_DIR)/$(LINK_NAME)"
 
 .PHONY: log
 log: ## Tail the launched-app log.

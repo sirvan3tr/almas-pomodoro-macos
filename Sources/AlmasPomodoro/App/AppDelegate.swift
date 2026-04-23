@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, AppAct
     private var renderer: StatusItemRenderer!
     private let timer = PomodoroTimer()
     private var presetStore: PresetStore!
+    private var commandServer: CommandServer!
 
     // MARK: - NSApplicationDelegate
 
@@ -36,6 +37,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, AppAct
         }
 
         renderer.render(.idle)
+
+        // Accept CLI commands over CFMessagePort. Started after the timer
+        // and renderer are wired so any incoming command sees a fully-
+        // constructed app.
+        commandServer = CommandServer(timer: timer, presetStore: presetStore)
+        commandServer.start()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
