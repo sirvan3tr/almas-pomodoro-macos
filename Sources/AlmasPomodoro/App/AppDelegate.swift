@@ -127,6 +127,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, AppAct
         timer.acknowledge()
     }
 
+    func toggleLaunchAtLogin(_ sender: NSMenuItem) {
+        let target = !LaunchAtLogin.isEnabled
+        do {
+            try LaunchAtLogin.setEnabled(target)
+        } catch {
+            fatalErrorUI(
+                title: "Could not change launch-at-login setting",
+                detail: String(describing: error)
+            )
+        }
+    }
+
     func quit(_ sender: Any?) {
         NSApp.terminate(nil)
     }

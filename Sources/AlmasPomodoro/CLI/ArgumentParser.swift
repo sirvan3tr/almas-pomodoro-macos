@@ -25,18 +25,21 @@ enum ArgumentParser {
         case command(Command)
         case help
         case version
+        case completions(Completions.Shell)
     }
 
     enum ParseError: Error, Equatable, CustomStringConvertible {
         case usage(String)
         case duration(DurationParser.ParseError)
         case presetName(PresetError)
+        case completions(Completions.GenerateError)
 
         var description: String {
             switch self {
             case .usage(let msg):  return msg
             case .duration(let e): return String(describing: e)
             case .presetName(let e): return String(describing: e)
+            case .completions(let e): return String(describing: e)
             }
         }
     }
@@ -51,15 +54,29 @@ enum ArgumentParser {
 
         // Keyword subcommands.
         switch args[0] {
-        case "stop":      return .command(.stop)
-        case "status":    return .command(.status)
-        case "dismiss":   return .command(.acknowledge)
-        case "ping":      return .command(.ping)
-        case "presets":   return try parsePresets(Array(args.dropFirst()))
-        case "preset":    return try parsePresetStart(Array(args.dropFirst()))
+        case "stop":        return .command(.stop)
+        case "status":      return .command(.status)
+        case "dismiss":     return .command(.acknowledge)
+        case "ping":        return .command(.ping)
+        case "presets":     return try parsePresets(Array(args.dropFirst()))
+        case "preset":      return try parsePresetStart(Array(args.dropFirst()))
+        case "completions": return try parseCompletions(Array(args.dropFirst()))
         default:
             // Positional duration + optional flags.
             return try parseStart(args)
+        }
+    }
+
+    private static func parseCompletions(_ args: [String]) throws -> Invocation {
+        guard let head = args.first, args.count == 1 else {
+            throw ParseError.usage(
+                "Usage: almaspom completions {zsh|bash|fish}"
+            )
+        }
+        do {
+            return .completions(try Completions.parseShell(head))
+        } catch let e as Completions.GenerateError {
+            throw ParseError.completions(e)
         }
     }
 
@@ -176,11 +193,12 @@ enum ArgumentParser {
       almaspom preset <name> [options]      Start a saved preset by name.
       almaspom stop                         Stop the running timer.
       almaspom dismiss                      Acknowledge a finished timer.
-      almaspom status                       Print current state as JSON.
+      almaspom status                       Print current state.
       almaspom presets                      List saved presets.
       almaspom presets add <name> <dur>     Add a preset.
       almaspom presets rm <name>            Remove a preset.
       almaspom ping                         Check the GUI is reachable.
+      almaspom completions <shell>          Print shell-completion script.
 
     OPTIONS
       -i, --intent <text>    Set the session intent (e.g. "Write 10 emails").

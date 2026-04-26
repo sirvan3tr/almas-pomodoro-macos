@@ -24,6 +24,36 @@ enum Icons {
         return img
     }
 
+    /// Variable-fill timer icon for use inside the running pill.
+    /// `progress` is `remaining / total`, clamped to 0…1, so the ring
+    /// drains as the session counts down.
+    static func runningPill(progress: Double) -> NSImage? {
+        let clamped = max(0.0, min(1.0, progress))
+        let img = NSImage(
+            systemSymbolName: "timer",
+            variableValue: clamped,
+            accessibilityDescription: "Almas Pomodoro — running"
+        )?.withSymbolConfiguration(
+            .init(pointSize: StatusItemStyle.pillIconPointSize, weight: .semibold)
+        )
+        img?.isTemplate = true
+        return img
+    }
+
+    /// Static bell for the finished-flash pill — distinct silhouette
+    /// from the running timer so a glance tells you which state you're in
+    /// even without reading the text.
+    static func finishedPill() -> NSImage? {
+        let img = NSImage(
+            systemSymbolName: "bell.fill",
+            accessibilityDescription: "Almas Pomodoro — finished"
+        )?.withSymbolConfiguration(
+            .init(pointSize: StatusItemStyle.pillIconPointSize, weight: .semibold)
+        )
+        img?.isTemplate = true
+        return img
+    }
+
     // MARK: - Menu items (palette-coloured)
 
     static func play() -> NSImage? {
@@ -48,6 +78,10 @@ enum Icons {
 
     static func quit() -> NSImage? {
         palette("power.circle.fill", [NSColor.secondaryLabelColor])
+    }
+
+    static func launchAtLogin() -> NSImage? {
+        palette("sunrise.circle.fill", [NSColor.systemOrange])
     }
 
     static func tomato() -> NSImage? {

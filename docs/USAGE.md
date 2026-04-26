@@ -19,19 +19,31 @@ From the menu you can:
 - **Remove preset** — submenu to delete a saved preset.
 - **Stop timer** (⌘.) — while running, returns to idle.
 - **Dismiss** (↩) — while flashing, acknowledges the finish.
+- **Launch at login** — toggle under *Settings*. Uses
+  `SMAppService.mainApp` and only operates when the app is running from
+  the installed `.app` bundle (i.e. after `make install`).
 - **Quit Almas Pomodoro** (⌘Q).
 
 ## Visual states
 
-| State     | Menu-bar appearance                                        |
-|-----------|-------------------------------------------------------------|
-| Idle      | Standard `timer` SF Symbol, no fill.                        |
-| Running   | **Purple** pill with white `MM:SS` countdown.               |
-| Finished  | Alternating **orange ↔ red** flash every 0.5s with a label. |
+| State    | Menu-bar appearance                                              |
+|----------|------------------------------------------------------------------|
+| Idle     | Standard `timer` SF Symbol, no fill.                             |
+| Running  | **Purple** pill with a small variable-fill timer ring whose ring drains as time elapses, plus a white `MM:SS` countdown next to it. |
+| Finished | Crossfading **amber ↔ indigo** pill every 0.6s with a bell icon and a `<preset> done` label. |
 
 **No sound is ever played.** The finish cue is visual only — matching the
 brief: "simply flash the top bar with a different color when the timer has
 finished."
+
+### Why amber ↔ indigo?
+
+The flash pair was deliberately chosen to remain distinguishable for
+red/green-deficient users (the most common form of colour blindness,
+~8% of men): amber and indigo differ in both hue and luminance across
+protanopia, deuteranopia, and tritanopia. Both colours are
+`NSColor.system*` variants so they adapt automatically to light/dark
+appearance.
 
 Flashing stops the moment you pick **Dismiss**, **Stop timer**, or start a
 new preset.

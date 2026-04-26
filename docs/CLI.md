@@ -46,7 +46,37 @@ almaspom presets rm  "Deep Work"
 almaspom ping                     # round-trip the GUI to check it's alive
 almaspom --help
 almaspom --version
+
+almaspom completions zsh          # print a completion script
 ```
+
+## Shell completions
+
+`almaspom completions {zsh|bash|fish}` prints a shell completion script
+to stdout. Pipe it into the right place for your shell, or use the
+Makefile helper which writes all three at once:
+
+```bash
+make completions
+```
+
+This installs:
+
+| Shell | Path                                                |
+|-------|-----------------------------------------------------|
+| zsh   | `~/.zsh/completions/_almaspom`                      |
+| bash  | `~/.local/share/bash-completion/completions/almaspom` |
+| fish  | `~/.config/fish/completions/almaspom.fish`          |
+
+For zsh, make sure `~/.zsh/completions` is on your `fpath`:
+
+```zsh
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit && compinit
+```
+
+Subcommand and saved-preset names complete dynamically (they shell out
+to `almaspom presets` and tolerate the GUI being absent).
 
 ## Duration grammar
 

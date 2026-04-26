@@ -115,6 +115,23 @@ unlink: ## Remove the CLI symlink.
 	@rm -f "$(LINK_DIR)/$(LINK_NAME)"
 	@echo "→ removed: $(LINK_DIR)/$(LINK_NAME)"
 
+ZSH_FPATH    ?= $(HOME)/.zsh/completions
+BASH_DIR     ?= $(HOME)/.local/share/bash-completion/completions
+FISH_DIR     ?= $(HOME)/.config/fish/completions
+
+.PHONY: completions
+completions: link ## Install zsh + bash + fish completions for almaspom.
+	@mkdir -p "$(ZSH_FPATH)" "$(BASH_DIR)" "$(FISH_DIR)"
+	@"$(LINK_DIR)/$(LINK_NAME)" completions zsh  > "$(ZSH_FPATH)/_$(LINK_NAME)"
+	@"$(LINK_DIR)/$(LINK_NAME)" completions bash > "$(BASH_DIR)/$(LINK_NAME)"
+	@"$(LINK_DIR)/$(LINK_NAME)" completions fish > "$(FISH_DIR)/$(LINK_NAME).fish"
+	@echo "→ zsh:  $(ZSH_FPATH)/_$(LINK_NAME)"
+	@echo "→ bash: $(BASH_DIR)/$(LINK_NAME)"
+	@echo "→ fish: $(FISH_DIR)/$(LINK_NAME).fish"
+	@echo
+	@echo "   For zsh, ensure '$(ZSH_FPATH)' is in your fpath, e.g. add to ~/.zshrc:"
+	@echo "     fpath=($(ZSH_FPATH) \$$fpath); autoload -Uz compinit && compinit"
+
 .PHONY: log
 log: ## Tail the launched-app log.
 	@tail -f /tmp/$(BIN_NAME).log

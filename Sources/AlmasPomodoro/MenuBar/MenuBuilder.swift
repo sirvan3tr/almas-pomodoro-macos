@@ -104,6 +104,10 @@ enum MenuBuilder {
             menu.addItem(removeItem)
         }
 
+        // Settings
+        menu.addItem(.sectionHeader(title: "Settings"))
+        menu.addItem(launchAtLoginItem(target: target))
+
         // Footer
         menu.addItem(.separator())
         menu.addItem(
@@ -117,6 +121,26 @@ enum MenuBuilder {
         )
 
         return menu
+    }
+
+    private static func launchAtLoginItem(target: AnyObject) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: "Launch at login",
+            action: #selector(AppActions.toggleLaunchAtLogin(_:)),
+            keyEquivalent: ""
+        )
+        item.target = target
+        item.image = Icons.launchAtLogin()
+        if LaunchAtLogin.isAvailable {
+            item.state = LaunchAtLogin.isEnabled ? .on : .off
+        } else {
+            // Disable visibly so the user sees why the toggle is dead
+            // when running from `swift run` instead of the installed .app.
+            item.state = .off
+            item.isEnabled = false
+            item.toolTip = "Available once installed via `make install`."
+        }
+        return item
     }
 
     // MARK: - Header
@@ -252,6 +276,7 @@ enum MenuBuilder {
     func addCustomPreset(_ sender: Any?)
     func stopTimer(_ sender: Any?)
     func acknowledgeFinish(_ sender: Any?)
+    func toggleLaunchAtLogin(_ sender: NSMenuItem)
     func quit(_ sender: Any?)
 }
 

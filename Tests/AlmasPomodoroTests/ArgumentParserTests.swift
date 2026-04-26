@@ -110,4 +110,38 @@ final class ArgumentParserTests: XCTestCase {
     func testPing() throws {
         XCTAssertEqual(try ArgumentParser.parse(["ping"]), .command(.ping))
     }
+
+    func testCompletionsForEachShell() throws {
+        XCTAssertEqual(
+            try ArgumentParser.parse(["completions", "zsh"]),
+            .completions(.zsh)
+        )
+        XCTAssertEqual(
+            try ArgumentParser.parse(["completions", "bash"]),
+            .completions(.bash)
+        )
+        XCTAssertEqual(
+            try ArgumentParser.parse(["completions", "fish"]),
+            .completions(.fish)
+        )
+    }
+
+    func testCompletionsCaseInsensitive() throws {
+        XCTAssertEqual(
+            try ArgumentParser.parse(["completions", "ZSH"]),
+            .completions(.zsh)
+        )
+    }
+
+    func testCompletionsRejectsUnknownShell() {
+        XCTAssertThrowsError(try ArgumentParser.parse(["completions", "tcsh"]))
+    }
+
+    func testCompletionsRejectsMissingShell() {
+        XCTAssertThrowsError(try ArgumentParser.parse(["completions"]))
+    }
+
+    func testCompletionsRejectsExtraArgs() {
+        XCTAssertThrowsError(try ArgumentParser.parse(["completions", "zsh", "extra"]))
+    }
 }

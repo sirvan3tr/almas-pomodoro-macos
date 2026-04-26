@@ -36,6 +36,10 @@ enum CLIRunner {
         case .version:
             print("almaspom \(version)")
             return 0
+        case .completions(let shell):
+            // Pure stdout — no IPC required, no GUI auto-launch.
+            print(Completions.script(for: shell))
+            return 0
         case .command(let command):
             return dispatch(command)
         }
